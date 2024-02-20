@@ -71,14 +71,22 @@
   let maleNum = null;
 
   function showCards(selectedCards) {
-    selectedCards.forEach((card, index) => {
-      setTimeout(() => {
-        insertCard(card)
-      }, (index + 1) * 150);
+    nextButtonContainer.style.display = "none";
+    const promise = new Promise(resolve => {
+      selectedCards.forEach((card, index) => {
+        setTimeout(() => {
+          insertCard(card);
+          if (index === selectedCards.length - 1) {
+            resolve();
+          }
+        }, (index + 1) * 150);
+      });
     });
+    nextButtonContainer.style.display = "block";
+    return promise;
   }
 
-  function nextStep() {
+  async function nextStep() {
     const nameLengthInput = document.getElementById("name-length");
     const originSelect = document.getElementById("origin-select");
     const maleSelect = document.getElementById("male-select");
@@ -91,17 +99,19 @@
         const randomCards = selectRandomCards();
         randomCards.forEach(card => selectedCards.push(card));
         randomCards.forEach(card => selectedCards.push(card));
-        selectedCards.forEach(card => insertCard(card))
+        await showCards(selectedCards);
         break;
 
       case 1:
         insertStep(`步骤2：根据输入的名字长度：${nameLength}，把 ${nameLength} 张牌依次放到末尾。`);
-        moveCardBack(nameLength, selectedCards).forEach(card => insertCard(card));
+        moveCardBack(nameLength, selectedCards)
+        await showCards(selectedCards);
         break;
 
       case 2:
         insertStep("步骤3：把牌堆顶3张放到中间的随机位置。");
-        moveCardMiddleRandom(3, selectedCards).forEach(card => insertCard(card));
+        moveCardMiddleRandom(3, selectedCards)
+        await showCards(selectedCards);
         break;
 
       case 3:
@@ -109,26 +119,28 @@
         restCard = selectedCards.shift();
         insertCard(restCard);
         insertStep("剩余的牌: ");
-        selectedCards.forEach(card => insertCard(card));
+        await showCards(selectedCards);
         break;
 
       case 4:
         origin = Number(originSelect.value);
         insertStep(`步骤5：你是${origin === 1 ? '南方人' : origin === 2 ? '北方人'
             : '不确定哪里人'}，把牌堆顶${origin}张牌插入到中间的随机位置。`);
-        moveCardMiddleRandom(origin, selectedCards).forEach(card => insertCard(card));
+        moveCardMiddleRandom(origin, selectedCards)
+        await showCards(selectedCards);
         break;
 
       case 5:
         maleNum = Number(maleSelect.value);
         insertStep(`步骤6：你是${maleNum === 1 ? "男生" : "女生"}，移除牌堆顶的${maleNum}张牌。`);
         selectedCards.splice(0, maleNum);
-        selectedCards.forEach(card => insertCard(card));
+        await showCards(selectedCards);
         break;
 
       case 6:
         insertStep(`步骤7：见证奇迹的时刻！（每说一个字，顶部的牌移动到末尾，共7字）`);
-        moveCardBack(7, selectedCards).forEach(card => insertCard(card));
+        moveCardBack(7, selectedCards)
+        await showCards(selectedCards);
         break;
 
       case 7:
@@ -137,11 +149,11 @@
           const luck = selectedCards.shift();
           selectedCards.push(luck);
           insertStep("好运留下来！");
-          selectedCards.forEach(card => insertCard(card));
+          await showCards(selectedCards);
 
           const sadness = selectedCards.shift();
           insertStep(`烦恼滚出去！：${sadness}`);
-          selectedCards.forEach(card => insertCard(card));
+          await showCards(selectedCards);
         }
         break;
 
@@ -157,8 +169,6 @@
     currentStep++;
 
     createNextStepButton();
-
-    magicDisplay.lastElementChild.scrollIntoView({behavior: "smooth"});
 
     document.addEventListener("keydown", handleEnterKey);
   }
@@ -245,6 +255,7 @@
     cardElement.textContent = card;
     cardElement.style.opacity = 0;
     magicDisplay.appendChild(cardElement);
+    magicDisplay.lastElementChild.scrollIntoView({behavior: "smooth"});
 
     setTimeout(() => {
       cardElement.style.opacity = 1;
