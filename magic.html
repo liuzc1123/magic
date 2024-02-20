@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>扑克魔术表演</title>
+  <style>
+    .card {
+      width: 100px;
+      height: 150px;
+      background-color: #fff;
+      border: 1px solid #000;
+      border-radius: 5px;
+      display: inline-block;
+      margin: 10px;
+      text-align: center;
+      line-height: 150px;
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+<h1>扑克魔术表演</h1>
+<h2>你名字的长度：</h2>
+<input id="name-length" type="number" min="1" value="3">
+<h2>你是哪里人：</h2>
+<select id="origin-select">
+  <option value="1">南方人</option>
+  <option value="2">北方人</option>
+  <option value="3">不确定</option>
+</select>
+<h2>你的性别：</h2>
+<select id="male-select">
+  <option value="1">男生</option>
+  <option value="2">女生</option>
+</select>
+<button id="start-button">开始</button>
+<div id="magic-display"></div>
+<div id="next-button-container"></div>
+<button id="end-button" style="display: none">结束</button>
+
+<script>
+  const magicDisplay = document.getElementById("magic-display");
+  const startButton = document.getElementById("start-button");
+  startButton.addEventListener("click", startMagic);
+  startButton.focus();
+  const nextButtonContainer = document.getElementById("next-button-container");
+  const endButton = document.getElementById("end-button");
+  endButton.addEventListener("click", endMagic);
+
+  let currentStep = 0;
+  let selectedCards = [];
+  let restCard = null;
+  let origin = null;
+  let maleNum = null;
+
+  function showCards(selectedCards) {
+    selectedCards.forEach((card, index) => {
+      setTimeout(() => {
+        insertCard(card)
+      }, (index + 1) * 150);
+    });
+  }
+
+  function nextStep() {
+    const nameLengthInput = document.getElementById("name-length");
+    const originSelect = document.getElementById("origin-select");
+    const maleSelect = document.getElementById("male-select");
+
+    const nameLength = Number(nameLengthInput.value);
+
+    switch (currentStep) {
+      case 0:
+        insertStep("步骤1：随机拿4张牌，中间对折撕成8张，按顺序叠放。");
+        const randomCards = selectRandomCards();
+        randomCards.forEach(card => selectedCards.push(card));
+        randomCards.forEach(card => selectedCards.push(card));
+        showCards(selectedCards)
+        break;
+
+      case 1:
+        insertStep(`步骤2：根据输入的名字长度：${nameLength}，把 ${nameLength} 张牌依次放到末尾。`);
+        moveCardBack(nameLength, selectedCards).forEach(card => insertCard(card));
+        break;
+
+      case 2:
+        insertStep("步骤3：把牌堆顶3张放到中间的随机位置。");
+        moveCardMiddleRandom(3, selectedCards).forEach(card => insertCard(card));
+        break;
+
+      case 3:
+        insertStep("步骤4：把最顶上的牌拿走，放在一边。拿出的牌为：");
+        restCard = selectedCards.shift();
+        insertCard(restCard);
+        insertStep("剩余的牌: ");
+        selectedCards.forEach(card => insertCard(card));
+        break;
+
+      case 4:
+        origin = Number(originSelect.value);
+        insertStep(`步骤5：你是${origin === 1 ? '南方人' : origin === 2 ? '北方人'
+            : '不确定哪里人'}，把牌堆顶${origin}张牌插入到中间的随机位置。`);
+        moveCardMiddleRandom(origin, selectedCards).forEach(card => insertCard(card));
+        break;
+
+      case 5:
+        maleNum = Number(maleSelect.value);
+        insertStep(`步骤6：你是${maleNum === 1 ? "男生" : "女生"}，移除牌堆顶的${maleNum}张牌。`);
+        selectedCards.splice(0, maleNum);
+        selectedCards.forEach(card => insertCard(card));
+        break;
+
+      case 6:
+        insertStep(`步骤7：见证奇迹的时刻！（每说一个字，顶部的牌移动到末尾，共7字）`);
+        moveCardBack(7, selectedCards).forEach(card => insertCard(card));
+        break;
+
+      case 7:
+        insertStep(`步骤8：好运留下来！（牌堆顶一张牌放到末尾），烦恼丢出去（移除一张牌），直到只剩下一张牌。`);
+        while (selectedCards.length > 1) {
+          const luck = selectedCards.shift();
+          selectedCards.push(luck);
+          insertStep("好运留下来！");
+          selectedCards.forEach(card => insertCard(card));
+
+          const sadness = selectedCards.shift();
+          insertStep(`烦恼滚出去！：${sadness}`);
+          selectedCards.forEach(card => insertCard(card));
+        }
+        break;
+
+      default:
+        // 输出魔术的最终结果
+        const result = document.createElement("p");
+        result.textContent = `魔术最终结果：选中的牌：${selectedCards.join("，")}，姓名长度：${nameLength}，哪里人：${origin
+        === 1 ? "南方人" : origin === 2 ? "北方人" : "不确定"}，剩下的牌：${selectedCards[0]}，藏起的牌：${restCard}`;
+        magicDisplay.appendChild(result);
+        endButton.style.display = "block";
+        break;
+    }
+    currentStep++;
+
+    createNextStepButton();
+
+    magicDisplay.lastElementChild.scrollIntoView({behavior: "smooth"});
+
+    document.addEventListener("keydown", handleEnterKey);
+  }
+
+  function createNextStepButton() {
+    // 创建下一步按钮
+    const nextStepButton = document.createElement("button");
+    nextStepButton.textContent = "下一步";
+    nextStepButton.addEventListener("click", nextStep);
+
+    nextButtonContainer.innerHTML = "";
+    nextButtonContainer.appendChild(nextStepButton);
+    nextStepButton.focus();
+  }
+
+  function handleEnterKey(event) {
+    if (event.key === "Enter") {
+      nextStep();
+    }
+    event.preventDefault();
+    document.removeEventListener("keydown", handleEnterKey);
+  }
+
+  function startMagic() {
+    initGame();
+
+    // 禁用开始按钮
+    startButton.disabled = true;
+    endButton.style.display = "none";
+
+    // 显示第一步的内容
+    nextStep();
+  }
+
+  function endMagic() {
+    magicDisplay.innerHTML = "";
+    startButton.disabled = false;
+    nextButtonContainer.innerHTML = "";
+    endButton.style.display="none";
+  }
+
+  function initGame() {
+    currentStep = 0;
+    selectedCards = [];
+    restCard = null;
+    origin = null;
+    maleNum = null;
+  }
+
+  function moveCardBack(n, arr) {
+    for (let i = 0; i < n; i++) {
+      let moveCard = arr.shift();
+      arr.push(moveCard);
+    }
+    return arr;
+  }
+
+  function moveCardMiddleRandom(n, arr) {
+    let idx = Math.floor(Math.random() * (arr.length - n - 2)) + 1;
+    const nArr = arr.splice(0, n)
+    arr.splice(idx, 0, ...nArr);
+    return arr;
+  }
+
+  function selectRandomCards() {
+    // 定义一副扑克牌的数组
+    let arr = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "Joker-", "Joker+"];
+    // 定义一个数组用于存放随机抽取的4张牌
+    let selectedCards = [];
+
+    // 从一副扑克牌中随机抽取4张牌
+    for (let i = 0; i < 4; i++) {
+      // 生成一个随机索引
+      let randomIndex = Math.floor(Math.random() * arr.length);
+      // 从扑克牌数组中移除选定的牌，并将其添加到已选牌的数组中
+      selectedCards.push(arr.splice(randomIndex, 1)[0]);
+    }
+    return selectedCards;
+  }
+
+  function insertCard(card) {
+    const cardElement = document.createElement("div");
+    cardElement.classList.add("card");
+    cardElement.textContent = card;
+    cardElement.style.opacity = 0;
+    magicDisplay.appendChild(cardElement);
+
+    setTimeout(() => {
+      cardElement.style.opacity = 1;
+    }, 100)
+  }
+
+  function insertStep(info) {
+    const stepElement = document.createElement("p");
+    stepElement.textContent = info;
+    magicDisplay.appendChild(stepElement);
+  }
+</script>
+</body>
+</html>
