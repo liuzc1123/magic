@@ -91,7 +91,7 @@
         const randomCards = selectRandomCards();
         randomCards.forEach(card => selectedCards.push(card));
         randomCards.forEach(card => selectedCards.push(card));
-        showCards(selectedCards)
+        selectedCards.forEach(card => insertCard(card))
         break;
 
       case 1:
