@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>扑克魔术表演</title>
   <style>
     .card {
@@ -14,6 +15,30 @@
       text-align: center;
       line-height: 150px;
       font-size: 24px;
+    }
+
+    body {
+      font-size: 16px;
+    }
+
+    /* 在小屏幕设备上调整字体和按钮大小 */
+    @media (max-width: 767px) {
+      body {
+        font-size: 14px;
+      }
+      .card {
+        font-size: 20px;
+      }
+      h1, h2 {
+        font-size: 18px;
+      }
+      input[type="number"], select {
+        font-size: 14px;
+      }
+      button {
+        font-size: 14px;
+        padding: 5px 10px;
+      }
     }
   </style>
 </head>
